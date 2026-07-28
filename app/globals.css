@@ -1,26 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0A0A0B;
+  --surface: #1C1D20;
+  --text-primary: #E8E6E1;
+  --text-secondary: #8B8D93;
+  --accent-from: #3A6FF5;
+  --accent-to: #7B3AF5;
+  --chrome: #C9CBCE;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-chrome: var(--chrome);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body, "Inter", sans-serif);
+  overflow-x: hidden;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  margin: 0;
+}
+
+::selection {
+  background: var(--accent-from);
+  color: var(--text-primary);
+}
+
+:focus-visible {
+  outline: 1px solid var(--accent-from);
+  outline-offset: 2px;
+}
+
+.accent-line {
+  background: linear-gradient(90deg, var(--accent-from), var(--accent-to));
 }
