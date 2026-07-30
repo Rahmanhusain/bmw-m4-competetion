@@ -1,21 +1,27 @@
 "use client";
 
-import { useMemo } from "react";
+import { useLayoutEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
-const GLB_PATH = "/models/2021_bmw_m4_competition.glb";
+const GLB_PATH = "/models/bmwm4comp.glb";
 
 function RealCar() {
   const { scene } = useGLTF(GLB_PATH);
 
-  useMemo(() => {
+  // Side effect, so it belongs in a layout effect rather than useMemo — under
+  // StrictMode/concurrent rendering useMemo can run on a render that never
+  // commits, and React is free to discard the memo and re-traverse the whole
+  // graph. Layout effect keeps it to exactly once per scene, before paint.
+  useLayoutEffect(() => {
     scene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-      }
+      const mesh = child as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      // Bounding volumes are needed for frustum culling; computing them once
+      // here means three doesn't lazily build them mid-frame later.
+      mesh.geometry?.computeBoundingSphere();
     });
   }, [scene]);
 

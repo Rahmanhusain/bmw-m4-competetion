@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { buildCameraPath, buildLookAtPath, getCameraPose } from "@/lib/camera-keyframes";
+import { buildCameraPath, buildLookAtPath, sampleCameraPose } from "@/lib/camera-keyframes";
 import { useScrollStore } from "@/lib/scroll-store";
 
 const positionCurve = buildCameraPath();
@@ -12,25 +12,26 @@ const lookAtCurve = buildLookAtPath();
 
 const _pos = new THREE.Vector3();
 const _look = new THREE.Vector3();
-const _currentPos = new THREE.Vector3();
 const _currentLook = new THREE.Vector3();
 
 export default function CameraRig() {
   const { camera } = useThree();
   const exploreMode = useScrollStore((s) => s.exploreMode);
-  const progress = useScrollStore((s) => s.progress);
   const orbitRef = useRef<any>(null);
 
   // Idle auto-rotate angle for hero
   const idleAngle = useRef(0);
   const hasScrolled = useRef(false);
 
-  useEffect(() => {
-    if (progress > 0.01) hasScrolled.current = true;
-  }, [progress]);
-
   useFrame((_, delta) => {
     if (exploreMode) return;
+
+    // Read scroll progress transiently. Subscribing to it with a selector made
+    // this component (and every child of the Canvas tree below it) re-render on
+    // every single scroll tick — dozens of React commits per second for a value
+    // only ever consumed inside this loop, which already runs every frame.
+    const progress = useScrollStore.getState().progress;
+    if (progress > 0.01) hasScrolled.current = true;
 
     if (!hasScrolled.current) {
       // Slow idle orbit around hero position
@@ -43,17 +44,20 @@ export default function CameraRig() {
       );
       _look.set(0, 0.5, 0);
     } else {
-      const pose = getCameraPose(progress, positionCurve, lookAtCurve);
-      _pos.copy(pose.position);
-      _look.copy(pose.lookAt);
+      sampleCameraPose(progress, positionCurve, lookAtCurve, _pos, _look);
     }
 
-    // Smooth damp toward target
-    _currentPos.copy(camera.position);
+    // Smooth damp toward target. `delta * 3` is only correct at one framerate:
+    // on a 144Hz display it damps ~2.4x slower than on 60Hz, and any frame spike
+    // makes the factor jump (a 100ms hitch would give 0.3, a visible snap).
+    // The exponential form is the same curve sampled correctly for any delta, so
+    // motion looks identical at 60Hz and stays stable when frames vary.
+    const k = 1 - Math.exp(-3 * delta);
+
     _currentLook.set(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
 
-    camera.position.lerp(_pos, delta * 3);
-    _currentLook.lerp(_look, delta * 3);
+    camera.position.lerp(_pos, k);
+    _currentLook.lerp(_look, k);
     camera.lookAt(_currentLook);
   });
 

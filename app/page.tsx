@@ -142,6 +142,25 @@ export default function HomePage() {
   const exploreMode = useScrollStore((s) => s.exploreMode);
   const loading = useScrollStore((s) => s.loading);
 
+  // The canvas only mounts once `loading` flips to false, which means the
+  // three.js chunk *and* the 19MB GLB were previously only requested after the
+  // loader had already finished — so the loader was pure dead time and the real
+  // wait started right as it disappeared. Warming both here overlaps the network
+  // with the loader animation. Nothing about the loader's timing or UI changes;
+  // by the time it hands off, the model is usually already decoded.
+  useEffect(() => {
+    let cancelled = false;
+    // Importing the module is enough: it pulls in the canvas chunk and its
+    // `useGLTF.preload(GLB_PATH)` at module scope kicks off the model fetch.
+    import("@/components/canvas/Experience").catch(() => {
+      // Warming is best-effort — the real mount below will surface any error.
+      if (cancelled) return;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Simulate loading (real progress would come from model loader)
   useEffect(() => {
     const store = useScrollStore.getState();

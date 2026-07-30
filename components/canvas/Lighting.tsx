@@ -10,6 +10,14 @@ export default function Lighting() {
         color="#fff5e8"
         castShadow
         shadow-mapSize={[2048, 2048]}
+        // Frustum bounds stay at the default ±5 so the shadow footprint is
+        // unchanged; only the depth range is tightened. The default far plane is
+        // 500 units for a light that sits ~14 units from the subject, which
+        // wastes almost the entire depth buffer's precision. Fitting it to the
+        // scene resolves the same shadow from a much better-conditioned depth
+        // range, at no visual cost.
+        shadow-camera-near={1}
+        shadow-camera-far={30}
       />
       {/* Hard rim light — left rear, makes black paint sing */}
       <directionalLight position={[-6, 4, -8]} intensity={2.4} color="#c8d8ff" />

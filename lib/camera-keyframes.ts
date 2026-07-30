@@ -78,3 +78,21 @@ export function getCameraPose(
     lookAt: lookAtCurve.getPoint(clamped),
   };
 }
+
+/**
+ * Same sampling as `getCameraPose`, but writes into caller-owned vectors instead
+ * of allocating. Use this on the render loop — `getCameraPose` allocates two
+ * Vector3s plus a wrapper object per call, which at 60fps is ~180 short-lived
+ * objects per second of GC pressure for identical numbers.
+ */
+export function sampleCameraPose(
+  t: number,
+  positionCurve: THREE.CatmullRomCurve3,
+  lookAtCurve: THREE.CatmullRomCurve3,
+  positionTarget: THREE.Vector3,
+  lookAtTarget: THREE.Vector3
+): void {
+  const clamped = THREE.MathUtils.clamp(t, 0, 1);
+  positionCurve.getPoint(clamped, positionTarget);
+  lookAtCurve.getPoint(clamped, lookAtTarget);
+}
