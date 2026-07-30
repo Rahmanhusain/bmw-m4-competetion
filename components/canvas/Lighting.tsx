@@ -20,7 +20,7 @@ export default function Lighting() {
         shadow-camera-far={30}
       />
       {/* Hard rim light — left rear, makes black paint sing */}
-      <directionalLight position={[-6, 4, -8]} intensity={2.4} color="#c8d8ff" />
+      <directionalLight position={[-4, 2, -4]} intensity={0.1} color="#c8d8ff" />
       {/* Soft fill — right, low, warm */}
       <directionalLight position={[5, 1, 6]} intensity={0.6} color="#ffe8d0" />
       {/* Ground bounce */}

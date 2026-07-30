@@ -3,10 +3,13 @@
 :root {
   --bg: #0A0A0B;
   --surface: #1C1D20;
-  --text-primary: #E8E6E1;
-  --text-secondary: #8B8D93;
+  --text-primary: #F2F1EE;
+  /* Was #8B8D93 — a flat mid-grey that read as washed out against the dark
+     scene. Lifted and cooled so body copy sits closer to the accent palette. */
+  --text-secondary: #A7ADBD;
   --accent-from: #3A6FF5;
   --accent-to: #7B3AF5;
+  --accent-cyan: #4FD8E8;
   --chrome: #C9CBCE;
 }
 
@@ -46,4 +49,176 @@ h1, h2, h3, h4, h5, h6 {
 
 .accent-line {
   background: linear-gradient(90deg, var(--accent-from), var(--accent-to));
+}
+
+/* ---- Gradient text ----------------------------------------------------
+   The gradient is 200% wide and slid across the clip, so the sheen travels
+   through the letterforms instead of sitting still. `background-clip: text`
+   needs a transparent fill to show through. */
+.gradient-text {
+  background: linear-gradient(
+    100deg,
+    var(--text-primary) 0%,
+    var(--accent-cyan) 25%,
+    var(--accent-from) 45%,
+    var(--accent-to) 65%,
+    var(--text-primary) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: gradient-pan 9s ease-in-out infinite;
+}
+
+@keyframes gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Same treatment, no motion — for small labels where a moving sheen is noise. */
+.gradient-text-static {
+  background: linear-gradient(100deg, var(--accent-cyan), var(--accent-from) 55%, var(--accent-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ---- Radial gradient backdrop ---------------------------------------
+   Three offset radial pools drifting on different periods. Because they sit
+   behind a transparent canvas they cost nothing on the GPU frame budget —
+   compositor-only work, no repaint of the 3D scene. */
+.radial-env {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #060608;
+}
+
+.radial-env::before,
+.radial-env::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  will-change: transform;
+}
+
+.radial-env::before {
+  width: 90vmax;
+  height: 90vmax;
+  top: -25vmax;
+  left: -20vmax;
+  background: radial-gradient(
+    circle,
+    rgba(58, 111, 245, 0.28) 0%,
+    rgba(58, 111, 245, 0.1) 40%,
+    transparent 70%
+  );
+  animation: drift-a 22s ease-in-out infinite;
+}
+
+.radial-env::after {
+  width: 75vmax;
+  height: 75vmax;
+  bottom: -30vmax;
+  right: -15vmax;
+  background: radial-gradient(
+    circle,
+    rgba(123, 58, 245, 0.26) 0%,
+    rgba(123, 58, 245, 0.09) 42%,
+    transparent 70%
+  );
+  animation: drift-b 27s ease-in-out infinite;
+}
+
+/* Third pool — a cyan rim low and centred, tying the car to the ground. */
+.radial-env-glow {
+  position: absolute;
+  width: 70vmax;
+  height: 45vmax;
+  left: 50%;
+  bottom: -22vmax;
+  margin-left: -35vmax;
+  border-radius: 50%;
+  filter: blur(70px);
+  background: radial-gradient(
+    ellipse,
+    rgba(79, 216, 232, 0.16) 0%,
+    rgba(79, 216, 232, 0.05) 45%,
+    transparent 72%
+  );
+  animation: pulse-glow 14s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(6vmax, 4vmax, 0) scale(1.08);
+  }
+  66% {
+    transform: translate3d(-3vmax, 7vmax, 0) scale(0.96);
+  }
+}
+
+@keyframes drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  40% {
+    transform: translate3d(-7vmax, -5vmax, 0) scale(1.1);
+  }
+  70% {
+    transform: translate3d(4vmax, -2vmax, 0) scale(0.94);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.14);
+    opacity: 1;
+  }
+}
+
+/* A faint vertical grain so the large flat gradient areas don't band on
+   8-bit displays. */
+.radial-env-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.012) 0px,
+    rgba(255, 255, 255, 0.012) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gradient-text,
+  .radial-env::before,
+  .radial-env::after,
+  .radial-env-glow {
+    animation: none;
+  }
 }

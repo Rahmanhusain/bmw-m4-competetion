@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import { AnimatePresence } from "motion/react";
 import { motion } from "motion/react";
 import { gsap } from "gsap";
@@ -12,6 +12,8 @@ import SectionPanel from "@/components/ui/SectionPanel";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import ExploreHint from "@/components/ui/ExploreHint";
 import Loader from "@/components/ui/Loader";
+import Header from "@/components/ui/Header";
+import RadialEnvironment from "@/components/ui/RadialEnvironment";
 
 // Dynamically import the R3F canvas — no SSR
 const Experience = dynamic(() => import("@/components/canvas/Experience"), {
@@ -24,6 +26,11 @@ gsap.registerPlugin(ScrollTrigger);
    Total scroll: hero(1vh) + 4 sections(4vh) + explore(1vh) = 6vh
    Scroll multiplier to make it feel luxurious */
 const SCROLL_HEIGHT_VH = 600; // 6x viewport
+
+/* Words animate in one at a time. Split on the word rather than the character:
+   the headline is set in a condensed display face, and per-letter staggering
+   makes the tracking visibly breathe as each glyph lands. */
+const HERO_WORDS = ["M4", "COMPETITION"];
 
 function HeroOverlay({ visible }: { visible: boolean }) {
   return (
@@ -50,32 +57,52 @@ function HeroOverlay({ visible }: { visible: boolean }) {
               fontWeight: 800,
               letterSpacing: "-0.04em",
               lineHeight: 1,
-              color: "#E8E6E1",
               marginBottom: "0.75rem",
+              display: "flex",
+              justifyContent: "center",
+              gap: "0.3em",
             }}
           >
-            M4 COMPETITION
+            {HERO_WORDS.map((word, i) => (
+              <motion.span
+                key={word}
+                className="gradient-text"
+                initial={{ opacity: 0, y: "0.35em", filter: "blur(8px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{
+                  duration: 0.9,
+                  delay: 0.45 + i * 0.14,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                style={{ display: "inline-block" }}
+              >
+                {word}
+              </motion.span>
+            ))}
           </h1>
-          <p
+          <motion.p
+            initial={{ opacity: 0, letterSpacing: "0.5em" }}
+            animate={{ opacity: 1, letterSpacing: "0.3em" }}
+            transition={{ duration: 1.1, delay: 0.85, ease: [0.22, 1, 0.36, 1] }}
+            className="gradient-text-static"
             style={{
               fontSize: "0.65rem",
               letterSpacing: "0.3em",
-              color: "#8B8D93",
               marginBottom: "2rem",
             }}
           >
             2021 · G82 · SAPPHIRE BLACK
-          </p>
+          </motion.p>
           <motion.div
             animate={{ y: [0, 6, 0] }}
             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
             style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.3rem" }}
           >
-            <p style={{ fontSize: "0.55rem", letterSpacing: "0.25em", color: "#8B8D93" }}>
+            <p style={{ fontSize: "0.55rem", letterSpacing: "0.25em", color: "var(--text-secondary)" }}>
               SCROLL TO EXPLORE
             </p>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M3 5L7 9L11 5" stroke="#8B8D93" strokeWidth="1" />
+              <path d="M3 5L7 9L11 5" stroke="var(--accent-cyan)" strokeWidth="1" />
             </svg>
           </motion.div>
         </motion.div>
@@ -110,17 +137,17 @@ function ClosingSection({ visible }: { visible: boolean }) {
               margin: "0 auto 1.5rem",
             }}
           />
-          <p style={{ fontSize: "0.6rem", letterSpacing: "0.2em", color: "#8B8D93", marginBottom: "1rem" }}>
+          <p style={{ fontSize: "0.6rem", letterSpacing: "0.2em", color: "var(--text-secondary)", marginBottom: "1rem" }}>
             DESIGNED FOR PORTFOLIO · 2024
           </p>
           <a
             href="#"
+            className="gradient-text"
             style={{
               fontSize: "0.7rem",
               letterSpacing: "0.15em",
-              color: "#E8E6E1",
               textDecoration: "none",
-              borderBottom: "1px solid #3A6FF5",
+              borderBottom: "1px solid var(--accent-from)",
               paddingBottom: "2px",
             }}
           >
@@ -137,7 +164,8 @@ export default function HomePage() {
   const setProgress = useScrollStore((s) => s.setProgress);
   const setActiveSection = useScrollStore((s) => s.setActiveSection);
   const setExploreMode = useScrollStore((s) => s.setExploreMode);
-  const setLoading = useScrollStore((s) => s.setLoading);
+  // No `setLoading` selector: the loader interval below writes through
+  // useScrollStore.getState() so it doesn't re-subscribe this component.
   const activeSection = useScrollStore((s) => s.activeSection);
   const exploreMode = useScrollStore((s) => s.exploreMode);
   const loading = useScrollStore((s) => s.loading);
@@ -214,10 +242,18 @@ export default function HomePage() {
 
   return (
     <>
+      {/* Animated radial-gradient backdrop. Mounted unconditionally and behind
+          the canvas (z-index 0 vs the canvas's 1) so the loader also sits over
+          it rather than over a flat fill. */}
+      <RadialEnvironment />
+
       <Loader />
 
       {/* Fixed 3D canvas */}
       {!loading && <Experience />}
+
+      {/* Logo-only header */}
+      {!loading && <Header />}
 
       {/* Scroll-progress dots */}
       {!loading && <ScrollProgress />}

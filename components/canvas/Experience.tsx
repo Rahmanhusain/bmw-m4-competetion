@@ -76,17 +76,22 @@ export default function Experience() {
       shadows={{ type: THREE.PCFShadowMap }}
       dpr={dpr}
       camera={{ fov: 40, near: 0.1, far: 100, position: [5, 2.5, 5] }}
-      // antialias is a no-op behind EffectComposer (the final pass is a
-      // fullscreen quad) — it only costs an extra multisampled canvas buffer.
+      // alpha is on so the animated radial-gradient backdrop in the DOM shows
+      // through instead of a flat fill. antialias stays off: it's a no-op behind
+      // EffectComposer (the final pass is a fullscreen quad) and only costs an
+      // extra multisampled canvas buffer.
       gl={{
         antialias: false,
-        alpha: false,
+        alpha: true,
         stencil: false,
         powerPreference: "high-performance",
       }}
       onCreated={({ gl }) => {
         gl.toneMapping = 2; // ACESFilmicToneMapping
         gl.toneMappingExposure = 1.1;
+        // Fully transparent clear so the CSS gradients behind the canvas are
+        // the visible environment.
+        gl.setClearAlpha(0);
       }}
       style={{
         position: "fixed",
@@ -94,11 +99,14 @@ export default function Experience() {
         left: 0,
         width: "100vw",
         height: "100vh",
-        background: "#0A0A0B",
+        // No background here — the .radial-env layer underneath is the backdrop.
+        zIndex: 1,
       }}
     >
-      <color attach="background" args={["#0A0A0B"]} />
-      <fog attach="fog" args={["#0A0A0B", 18, 35]} />
+      {/* No <color attach="background"> — an opaque scene background would
+          paint over the DOM gradient. Fog stays: it still fades any distant
+          geometry toward the backdrop's base tone. */}
+      <fog attach="fog" args={["#08080C", 18, 35]} />
 
       {/* Actually wired up: trades a little resolution for framerate when the
           GPU can't keep up, instead of dropping frames. */}

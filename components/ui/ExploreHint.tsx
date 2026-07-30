@@ -24,14 +24,19 @@ export default function ExploreHint() {
             pointerEvents: "none",
           }}
         >
-          <p style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "#8B8D93" }}>
+          <motion.p
+            className="gradient-text"
+            animate={{ opacity: [0.65, 1, 0.65] }}
+            transition={{ repeat: Infinity, duration: 3.2, ease: "easeInOut" }}
+            style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.2em" }}
+          >
             DRAG TO EXPLORE
-          </p>
+          </motion.p>
           <div
             style={{
               width: "1px",
               height: "24px",
-              background: "linear-gradient(180deg, #3A6FF5, transparent)",
+              background: "linear-gradient(180deg, #4FD8E8, #3A6FF5 45%, transparent)",
               margin: "0.5rem auto 0",
             }}
           />

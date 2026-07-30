@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import type { Variants } from "motion/react";
 import type { Section } from "@/lib/sections";
 
 interface SectionPanelProps {
@@ -8,7 +9,7 @@ interface SectionPanelProps {
   visible: boolean;
 }
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: {},
   visible: {
     transition: { staggerChildren: 0.08, delayChildren: 0.1 },
@@ -18,7 +19,7 @@ const containerVariants = {
   },
 };
 
-const lineVariants = {
+const lineVariants: Variants = {
   hidden: (alignment: "left" | "right") => ({
     opacity: 0,
     x: alignment === "left" ? -40 : 40,
@@ -61,7 +62,7 @@ export default function SectionPanel({ section, visible }: SectionPanelProps) {
         style={{
           fontSize: "0.65rem",
           letterSpacing: "0.25em",
-          color: "#8B8D93",
+          color: "var(--accent-cyan)",
           marginBottom: "0.75rem",
         }}
       >
@@ -85,12 +86,12 @@ export default function SectionPanel({ section, visible }: SectionPanelProps) {
       <motion.h2
         custom={section.alignment}
         variants={lineVariants}
+        className="gradient-text"
         style={{
           fontSize: "clamp(1.5rem, 3vw, 2.4rem)",
           fontWeight: 700,
           lineHeight: 1.1,
           letterSpacing: "-0.02em",
-          color: "#E8E6E1",
           marginBottom: "0.75rem",
         }}
       >
@@ -104,7 +105,7 @@ export default function SectionPanel({ section, visible }: SectionPanelProps) {
         style={{
           fontSize: "0.85rem",
           lineHeight: 1.65,
-          color: "#8B8D93",
+          color: "var(--text-secondary)",
           maxWidth: "360px",
           ...(isLeft ? {} : { marginLeft: "auto" }),
         }}
@@ -127,12 +128,12 @@ export default function SectionPanel({ section, visible }: SectionPanelProps) {
           {section.stats.map((stat) => (
             <div key={stat.label} style={{ textAlign: isLeft ? "left" : "right" }}>
               <span
+                className="gradient-text"
                 style={{
                   fontSize: "clamp(2rem, 4vw, 3.2rem)",
                   fontWeight: 800,
                   lineHeight: 1,
                   letterSpacing: "-0.03em",
-                  color: "#E8E6E1",
                 }}
               >
                 {stat.value}
@@ -140,14 +141,14 @@ export default function SectionPanel({ section, visible }: SectionPanelProps) {
               <span
                 style={{
                   fontSize: "0.7rem",
-                  color: "#8B8D93",
+                  color: "var(--accent-cyan)",
                   marginLeft: "0.3rem",
                   letterSpacing: "0.05em",
                 }}
               >
                 {stat.unit}
               </span>
-              <p style={{ fontSize: "0.6rem", color: "#8B8D93", letterSpacing: "0.15em", marginTop: "0.25rem" }}>
+              <p style={{ fontSize: "0.6rem", color: "var(--text-secondary)", letterSpacing: "0.15em", marginTop: "0.25rem" }}>
                 {stat.label}
               </p>
             </div>
