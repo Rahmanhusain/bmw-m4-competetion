@@ -28,6 +28,11 @@ function PostProcessing() {
         luminanceThreshold={0.8}
         luminanceSmoothing={0.5}
         mipmapBlur
+        // Default is 8. Each level is another downsample + upsample pass over
+        // the HDR buffer; levels 7 and 8 operate on 1-2px mips whose
+        // contribution at this intensity is imperceptible. Cutting to 6 drops
+        // four fullscreen-ish passes per frame.
+        levels={6}
       />
       <Vignette offset={0.35} darkness={0.6} />
     </EffectComposer>
@@ -71,6 +76,18 @@ export default function Experience() {
   );
   const [dpr, setDpr] = useState(maxDpr);
 
+  // PerformanceMonitor trades DPR for framerate. Tuned to clamp tighter under
+  // load: the earlier version had a wide range (0.75×max → max), which meant
+  // degrading from 2 to 1.5 on a retina display. That doesn't save much — both
+  // are still well above 1× — and the user only notices the resolution drop.
+  // Cutting the floor to 0.5×max means the monitor can reach 1× before hitting
+  // bottom, which is where the frame-time savings actually live.
+  const handlePerformanceChange = useMemo(
+    () => ({ factor }: { factor: number }) =>
+      setDpr(Math.round(maxDpr * (0.5 + 0.5 * factor) * 100) / 100),
+    [maxDpr]
+  );
+
   return (
     <Canvas
       shadows={{ type: THREE.PCFShadowMap }}
@@ -110,14 +127,7 @@ export default function Experience() {
 
       {/* Actually wired up: trades a little resolution for framerate when the
           GPU can't keep up, instead of dropping frames. */}
-      <PerformanceMonitor
-        factor={1}
-        onChange={({ factor }) =>
-          setDpr(
-            Math.round(maxDpr * (0.75 + 0.25 * factor) * 100) / 100
-          )
-        }
-      />
+      <PerformanceMonitor factor={1} onChange={handlePerformanceChange} />
 
       <Suspense fallback={null}>
         <Environment preset="city" background={false} />

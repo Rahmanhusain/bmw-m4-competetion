@@ -7,11 +7,14 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import dynamic from "next/dynamic";
 import { useScrollStore } from "@/lib/scroll-store";
+import { scrollToTop } from "@/lib/scroll-to-top";
 import { sections } from "@/lib/sections";
 import SectionPanel from "@/components/ui/SectionPanel";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import ExploreHint from "@/components/ui/ExploreHint";
 import Loader from "@/components/ui/Loader";
+import SocialLinks from "@/components/ui/SocialLinks";
+import AudioCues from "@/components/ui/AudioCues";
 import Header from "@/components/ui/Header";
 import RadialEnvironment from "@/components/ui/RadialEnvironment";
 
@@ -137,22 +140,23 @@ function ClosingSection({ visible }: { visible: boolean }) {
               margin: "0 auto 1.5rem",
             }}
           />
-          <p style={{ fontSize: "0.6rem", letterSpacing: "0.2em", color: "var(--text-secondary)", marginBottom: "1rem" }}>
+          <p style={{ fontSize: "0.6rem", letterSpacing: "0.2em", color: "var(--text-secondary)", marginBottom: "1.25rem" }}>
             DESIGNED FOR PORTFOLIO · 2024
           </p>
-          <a
-            href="#"
-            className="gradient-text"
-            style={{
-              fontSize: "0.7rem",
-              letterSpacing: "0.15em",
-              textDecoration: "none",
-              borderBottom: "1px solid var(--accent-from)",
-              paddingBottom: "2px",
-            }}
+
+          <SocialLinks />
+
+          <button
+            type="button"
+            onClick={scrollToTop}
+            className="cta-btn"
+            aria-label="Replay the showcase from the top"
           >
-            VIEW PORTFOLIO →
-          </a>
+            <span>VIEW PORTFOLIO</span>
+            <span className="cta-arrow" aria-hidden>
+              →
+            </span>
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
@@ -252,8 +256,11 @@ export default function HomePage() {
       {/* Fixed 3D canvas */}
       {!loading && <Experience />}
 
-      {/* Logo-only header */}
+      {/* Header: logo + audio toggle */}
       {!loading && <Header />}
+
+      {/* Scroll/camera sound cues. Renders nothing. */}
+      {!loading && <AudioCues />}
 
       {/* Scroll-progress dots */}
       {!loading && <ScrollProgress />}

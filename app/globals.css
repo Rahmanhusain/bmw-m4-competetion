@@ -4,8 +4,6 @@
   --bg: #0A0A0B;
   --surface: #1C1D20;
   --text-primary: #F2F1EE;
-  /* Was #8B8D93 — a flat mid-grey that read as washed out against the dark
-     scene. Lifted and cooled so body copy sits closer to the accent palette. */
   --text-secondary: #A7ADBD;
   --accent-from: #3A6FF5;
   --accent-to: #7B3AF5;
@@ -84,7 +82,12 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Same treatment, no motion — for small labels where a moving sheen is noise. */
 .gradient-text-static {
-  background: linear-gradient(100deg, var(--accent-cyan), var(--accent-from) 55%, var(--accent-to));
+  background: linear-gradient(
+    100deg,
+    var(--accent-cyan),
+    var(--accent-from) 55%,
+    var(--accent-to)
+  );
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -109,7 +112,12 @@ h1, h2, h3, h4, h5, h6 {
   content: "";
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
+  /* No filter: blur() here any more. These are radial gradients that already
+     fade to transparent well inside their own box, so the blur had almost
+     nothing to soften — but a 60px blur on a 90vmax layer is a large GPU pass
+     that had to re-run on every composite, and the transparent WebGL canvas
+     composites over it every single frame. Dropping it is the single biggest
+     frame-time win available here, for a near-identical picture. */
   will-change: transform;
 }
 
@@ -150,7 +158,8 @@ h1, h2, h3, h4, h5, h6 {
   bottom: -22vmax;
   margin-left: -35vmax;
   border-radius: 50%;
-  filter: blur(70px);
+  /* No blur here either: same reason as the ::before/after pseudo-elements.
+     A 70px blur on this large a layer costs more than the softness gains. */
   background: radial-gradient(
     ellipse,
     rgba(79, 216, 232, 0.16) 0%,
@@ -212,6 +221,217 @@ h1, h2, h3, h4, h5, h6 {
     transparent 1px,
     transparent 3px
   );
+}
+
+/* ---- Social buttons --------------------------------------------------
+   Circular glass buttons. The gradient ring lives on a ::before so the border
+   can be a gradient at all (border-image can't do radius) and so the hover
+   state is a single opacity change rather than a repaint of the button. */
+.social-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(167, 173, 189, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  text-decoration: none;
+  transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.social-btn::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    var(--accent-cyan) 0%,
+    var(--accent-from) 55%,
+    var(--accent-to) 100%
+  );
+  /* Mask out the middle so only the 1px ring shows. */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.social-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: transparent;
+  box-shadow: 0 6px 22px rgba(58, 111, 245, 0.3);
+}
+
+.social-btn:hover::before {
+  opacity: 1;
+}
+
+/* ---- Audio toggle ----------------------------------------------------
+   Lives in the header row, left of the logo. Same glass treatment as the
+   social buttons so the two read as one control family. */
+.audio-toggle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(167, 173, 189, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.25s ease, border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.audio-toggle:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(79, 216, 232, 0.55);
+  box-shadow: 0 4px 18px rgba(58, 111, 245, 0.28);
+}
+
+.audio-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 13px;
+}
+
+.audio-bar {
+  width: 2px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--text-secondary);
+  /* Grow from the baseline, not the centre. */
+  transform-origin: bottom;
+  transition: background 0.25s ease;
+}
+
+/* Only the live variant animates, so a muted toggle is fully static. */
+.audio-bar-live {
+  background: var(--accent-cyan);
+  animation: audio-eq 1.1s ease-in-out infinite;
+}
+
+.audio-bar-live:nth-child(1) {
+  animation-delay: -0.55s;
+}
+
+.audio-bar-live:nth-child(2) {
+  animation-delay: -0.2s;
+}
+
+.audio-bar-live:nth-child(3) {
+  animation-delay: -0.85s;
+}
+
+@keyframes audio-eq {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(3.1);
+  }
+}
+
+/* ---- Logo lockup ------------------------------------------------------
+   The mark is a button (it returns to the top), so the UA button chrome has
+   to be stripped back to nothing. The 1rem gap is what the header row used to
+   apply between the ring and the wordmark, kept here so the spacing is
+   unchanged now that the two sit inside their own element. */
+.logo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: opacity 0.25s ease;
+}
+
+.logo-btn:hover {
+  opacity: 0.82;
+}
+
+/* ---- Primary CTA ----------------------------------------------------- */
+.cta-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-decoration: none;
+  /* This is a <button>, so the UA font and cursor have to be overridden —
+     buttons don't inherit either. */
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text-primary);
+  background: linear-gradient(
+    100deg,
+    rgba(79, 216, 232, 0.16),
+    rgba(58, 111, 245, 0.22) 55%,
+    rgba(123, 58, 245, 0.2)
+  );
+  border: 1px solid rgba(157, 187, 255, 0.35);
+  overflow: hidden;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* Sheen that sweeps across on hover. transform-only, so it composites. */
+.cta-btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 45%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.22),
+    transparent
+  );
+  transform: translateX(0);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+
+.cta-btn:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 8px 30px rgba(58, 111, 245, 0.35);
+}
+
+.cta-btn:hover::after {
+  transform: translateX(340%);
+}
+
+.cta-btn .cta-arrow {
+  transition: transform 0.3s ease;
+}
+
+.cta-btn:hover .cta-arrow {
+  transform: translateX(4px);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -72,7 +72,16 @@ export default function CameraRig() {
         maxPolarAngle={Math.PI / 2.2}
         target={[0, 0.5, 0]}
         enableDamping
-        dampingFactor={0.05}
+        // OrbitControls decays its pending rotation by `1 - dampingFactor` per
+        // frame, so this number is a *rate*, not an amount of smoothing: at the
+        // old 0.05 the camera needed ~45 frames (0.75s) to settle 90% of a drag,
+        // which is what read as "not dragging smoothly" — the model trailed the
+        // cursor. 0.12 settles the same drag in ~18 frames (~0.3s): still damped,
+        // but it tracks the pointer instead of lagging behind it.
+        dampingFactor={0.12}
+        // A touch above 1:1 so the car feels directly attached to the pointer.
+        rotateSpeed={1.05}
+        zoomSpeed={0.9}
       />
     );
   }
