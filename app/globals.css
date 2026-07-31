@@ -314,16 +314,26 @@ h1, h2, h3, h4, h5, h6 {
   width: 2px;
   height: 4px;
   border-radius: 1px;
-  background: var(--text-secondary);
+  background: var(--accent-cyan);
   /* Grow from the baseline, not the centre. */
   transform-origin: bottom;
-  transition: background 0.25s ease;
 }
 
-/* Only the live variant animates, so a muted toggle is fully static. */
+/* Only rendered while audio is audible, so the animation is unconditional. */
 .audio-bar-live {
-  background: var(--accent-cyan);
   animation: audio-eq 1.1s ease-in-out infinite;
+}
+
+/* The silent state. Dimmer than the live bars — this is the resting look, and
+   it shouldn't pull attention the way the cyan meter does. */
+.audio-muted-icon {
+  display: block;
+  color: var(--text-secondary);
+  transition: color 0.25s ease;
+}
+
+.audio-toggle:hover .audio-muted-icon {
+  color: var(--text-primary);
 }
 
 .audio-bar-live:nth-child(1) {
@@ -346,6 +356,233 @@ h1, h2, h3, h4, h5, h6 {
   50% {
     transform: scaleY(3.1);
   }
+}
+
+/* ---- Sound mixer -----------------------------------------------------
+   Drops out of the indicator button. Anchored to the right edge rather than
+   the left because the trigger sits near the right of the viewport — opening
+   leftward is what keeps the panel on screen. The transform-origin matches
+   that corner so the entry animation reads as unfolding from the button. */
+.audio-panel {
+  position: absolute;
+  top: calc(100% + 0.7rem);
+  right: 0;
+  z-index: 60;
+  width: 236px;
+  padding: 0.9rem 1rem 0.8rem;
+  border-radius: 14px;
+  text-align: left;
+  transform-origin: top right;
+  background: linear-gradient(
+    160deg,
+    rgba(28, 29, 32, 0.95),
+    rgba(10, 10, 11, 0.97)
+  );
+  border: 1px solid rgba(167, 173, 189, 0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.55);
+}
+
+.audio-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.audio-panel-title {
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+}
+
+.audio-panel-reset {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+
+.audio-panel-reset:hover {
+  color: var(--accent-cyan);
+}
+
+.audio-row {
+  margin-bottom: 0.85rem;
+  transition: opacity 0.25s ease;
+}
+
+.audio-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.audio-row-label {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--text-primary);
+}
+
+/* Tabular figures so the readout doesn't jitter horizontally while dragging. */
+.audio-row-value {
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-cyan);
+}
+
+.audio-row-hint {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  color: rgba(167, 173, 189, 0.6);
+}
+
+/* ---- Range sliders ---------------------------------------------------
+   The track is one background: the accent ramp up to --fill (set inline from
+   the current value), plain rail beyond it. That means the filled portion
+   ends exactly at the thumb without a second absolutely-positioned element,
+   and a drag only invalidates this one property. */
+.audio-range {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin: 0;
+  border-radius: 2px;
+  cursor: pointer;
+  background: linear-gradient(
+      90deg,
+      var(--accent-cyan) 0%,
+      var(--accent-from) 60%,
+      var(--accent-to) 100%
+    )
+    no-repeat;
+  background-size: var(--fill, 0%) 100%;
+  background-color: rgba(167, 173, 189, 0.2);
+}
+
+/* Thumb rules can't be grouped: an unrecognised selector invalidates the
+   whole block in each engine, so WebKit and Gecko need separate copies. */
+.audio-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 0;
+  box-shadow: 0 0 0 1px rgba(10, 10, 11, 0.8), 0 2px 8px rgba(58, 111, 245, 0.45);
+  transition: transform 0.15s ease;
+}
+
+.audio-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 0;
+  box-shadow: 0 0 0 1px rgba(10, 10, 11, 0.8), 0 2px 8px rgba(58, 111, 245, 0.45);
+  transition: transform 0.15s ease;
+}
+
+.audio-range:hover::-webkit-slider-thumb {
+  transform: scale(1.18);
+}
+
+.audio-range:hover::-moz-range-thumb {
+  transform: scale(1.18);
+}
+
+/* Firefox paints its own track over the element background, so it has to be
+   transparent for the --fill gradient above to show through. */
+.audio-range::-moz-range-track {
+  background: transparent;
+}
+
+/* ---- Mute row --------------------------------------------------------
+   A full-width button rather than a bare switch so the label is part of the
+   hit target. */
+.audio-mute-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 0.15rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 9px;
+  font-family: inherit;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(167, 173, 189, 0.14);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.audio-mute-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(79, 216, 232, 0.4);
+}
+
+.audio-mute-label {
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-secondary);
+}
+
+.audio-mute-row[aria-pressed="true"] .audio-mute-label {
+  color: var(--text-primary);
+}
+
+.audio-switch {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(167, 173, 189, 0.22);
+  transition: background 0.25s ease;
+}
+
+/* "On" here means muted — the switch is a mute switch, not a sound switch. */
+.audio-switch-on {
+  background: linear-gradient(90deg, var(--accent-from), var(--accent-to));
+}
+
+.audio-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.audio-switch-on .audio-switch-knob {
+  transform: translateX(14px);
+}
+
+.audio-panel-note {
+  margin: 0.6rem 0 0;
+  font-size: 0.5rem;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: rgba(167, 173, 189, 0.6);
 }
 
 /* ---- Logo lockup ------------------------------------------------------
@@ -438,7 +675,23 @@ h1, h2, h3, h4, h5, h6 {
   .gradient-text,
   .radial-env::before,
   .radial-env::after,
-  .radial-env-glow {
+  .radial-env-glow,
+  .audio-bar-live {
     animation: none;
+  }
+}
+
+/* With the equaliser animation suppressed the bars would sit flat and read as
+   silence, so give them a fixed stepped profile instead — still visibly the
+   "on" state, just not moving. */
+@media (prefers-reduced-motion: reduce) {
+  .audio-bar-live:nth-child(1) {
+    height: 7px;
+  }
+  .audio-bar-live:nth-child(2) {
+    height: 12px;
+  }
+  .audio-bar-live:nth-child(3) {
+    height: 5px;
   }
 }
