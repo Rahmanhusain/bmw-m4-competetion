@@ -4,7 +4,7 @@ import { useLayoutEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
-const GLB_PATH = "/models/bmwm4comp-optimized.glb";
+const GLB_PATH = "/models/bmwm4comp.glb";
 
 function RealCar() {
   const { scene } = useGLTF(GLB_PATH);

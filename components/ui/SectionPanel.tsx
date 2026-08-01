@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import type { Variants } from "motion/react";
 import type { Section } from "@/lib/sections";
+import CountUp from "./CountUp";
 
 interface SectionPanelProps {
   section: Section;
@@ -134,9 +135,12 @@ export default function SectionPanel({ section, visible }: SectionPanelProps) {
                   fontWeight: 800,
                   lineHeight: 1,
                   letterSpacing: "-0.03em",
+                  /* Tabular figures so the counter doesn't jitter horizontally
+                     as digits change width mid-count. */
+                  fontVariantNumeric: "tabular-nums",
                 }}
               >
-                {stat.value}
+                <CountUp value={stat.value} active={visible} />
               </span>
               <span
                 style={{

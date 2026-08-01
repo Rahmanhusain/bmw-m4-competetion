@@ -18,6 +18,9 @@ console.warn = (...args: unknown[]) => {
   _origWarn.apply(console, args);
 };
 
+/** Aspect the camera keyframes were framed against (a typical desktop window). */
+const REFERENCE_ASPECT = 16 / 9;
+
 function PostProcessing() {
   return (
     // 4x MSAA is visually indistinguishable from the default 8x here but
@@ -63,6 +66,55 @@ function FreezeShadows() {
       gl.shadowMap.needsUpdate = true;
     }
   });
+
+  return null;
+}
+
+/**
+ * Widens the field of view on narrow viewports so the car still fits.
+ *
+ * A perspective camera's `fov` is *vertical*; the horizontal extent is derived
+ * from it via the aspect ratio. The keyframe path in `camera-keyframes.ts` was
+ * framed on a desktop window (aspect ~1.7), where 40° vertical gives a wide
+ * enough horizontal cone to hold a 4.8m car. On a phone in portrait (aspect
+ * ~0.46) that same 40° yields barely a third of the horizontal angle, so the
+ * nose and tail fall outside the frustum — the car is cut off at both ends.
+ *
+ * Rather than authoring a second set of keyframes for mobile, this solves for
+ * the vertical fov that keeps the *horizontal* cone constant. The distances,
+ * timings and lookAt targets all stay exactly as choreographed; only the lens
+ * gets wider, which is the same thing a photographer would do stepping back
+ * into a tight space.
+ *
+ * Clamped at 68° because past that the perspective distortion becomes obvious
+ * and the wheels start to bow outward at the frame edge.
+ */
+function ResponsiveCamera() {
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const size = useThree((s) => s.size);
+
+  useLayoutEffect(() => {
+    const aspect = size.width / Math.max(1, size.height);
+
+    // The horizontal cone the desktop framing produces, held as the target.
+    const baseVertical = THREE.MathUtils.degToRad(40);
+    const baseHorizontal = 2 * Math.atan(Math.tan(baseVertical / 2) * REFERENCE_ASPECT);
+
+    // Only ever widen. On wide screens the original 40° already frames well and
+    // narrowing it would push the car uncomfortably large in the viewport.
+    const fov =
+      aspect >= REFERENCE_ASPECT
+        ? 40
+        : Math.min(
+            68,
+            THREE.MathUtils.radToDeg(
+              2 * Math.atan(Math.tan(baseHorizontal / 2) / aspect)
+            )
+          );
+
+    camera.fov = fov;
+    camera.updateProjectionMatrix();
+  }, [camera, size.width, size.height]);
 
   return null;
 }
@@ -115,7 +167,11 @@ export default function Experience() {
         top: 0,
         left: 0,
         width: "100vw",
-        height: "100vh",
+        // `dvh` rather than `vh`: on mobile browsers `100vh` is the *largest*
+        // viewport (URL bar retracted), so a `100vh` canvas is taller than what
+        // is actually on screen and the bottom of the frame — where the car's
+        // wheels sit — is hidden behind the browser chrome.
+        height: "100dvh",
         // No background here — the .radial-env layer underneath is the backdrop.
         zIndex: 1,
       }}
@@ -141,6 +197,7 @@ export default function Experience() {
       </Suspense>
 
       <CameraRig />
+      <ResponsiveCamera />
       <PostProcessing />
     </Canvas>
   );

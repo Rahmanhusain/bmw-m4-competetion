@@ -15,9 +15,8 @@ const _look = new THREE.Vector3();
 const _currentLook = new THREE.Vector3();
 
 export default function CameraRig() {
-  const { camera } = useThree();
+  const camera = useThree((s) => s.camera);
   const exploreMode = useScrollStore((s) => s.exploreMode);
-  const orbitRef = useRef<any>(null);
 
   // Idle auto-rotate angle for hero
   const idleAngle = useRef(0);
@@ -34,7 +33,7 @@ export default function CameraRig() {
     if (progress > 0.01) hasScrolled.current = true;
 
     if (!hasScrolled.current) {
-      // Slow idle orbit around hero position
+      // Slow idle orbit around the hero pose.
       idleAngle.current += delta * 0.15;
       const r = 7;
       _pos.set(
@@ -64,7 +63,6 @@ export default function CameraRig() {
   if (exploreMode) {
     return (
       <OrbitControls
-        ref={orbitRef}
         enablePan={false}
         minDistance={3}
         maxDistance={12}

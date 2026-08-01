@@ -17,6 +17,7 @@ import SocialLinks from "@/components/ui/SocialLinks";
 import AudioCues from "@/components/ui/AudioCues";
 import Header from "@/components/ui/Header";
 import RadialEnvironment from "@/components/ui/RadialEnvironment";
+import KeyboardNav from "@/components/ui/KeyboardNav";
 
 // Dynamically import the R3F canvas — no SSR
 const Experience = dynamic(() => import("@/components/canvas/Experience"), {
@@ -126,9 +127,17 @@ function ClosingSection({ visible }: { visible: boolean }) {
           style={{
             position: "fixed",
             bottom: "6rem",
-            left: "50%",
-            transform: "translateX(-50%)",
+            // Centred by a flex row spanning the viewport rather than
+            // `left:50% + translateX(-50%)`. The `y` animation above compiles to
+            // a `transform`, which overwrites an inline `translateX` entirely —
+            // that is what had this block sitting left of centre.
+            left: 0,
+            right: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
             textAlign: "center",
+            padding: "0 1.25rem",
             zIndex: 30,
           }}
         >
@@ -261,6 +270,9 @@ export default function HomePage() {
 
       {/* Scroll/camera sound cues. Renders nothing. */}
       {!loading && <AudioCues />}
+
+      {/* Arrow/Home/End/digit navigation. Renders nothing. */}
+      {!loading && <KeyboardNav />}
 
       {/* Scroll-progress dots */}
       {!loading && <ScrollProgress />}

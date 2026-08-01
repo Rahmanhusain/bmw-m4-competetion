@@ -1,11 +1,45 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useScrollStore } from "@/lib/scroll-store";
+
+/**
+ * True for phones and small tablets — the devices this experience is worth
+ * warning about.
+ *
+ * Tested with `pointer: coarse` *and* a width ceiling rather than a user-agent
+ * sniff: the thing that actually degrades here is a small screen driving a heavy
+ * WebGL scene, not any particular vendor. A touchscreen laptop reports coarse
+ * pointer on some configurations but has the width and the GPU to run this fine,
+ * so the width check keeps it out of the warning.
+ *
+ * Evaluated in an effect rather than during render because `matchMedia` does not
+ * exist on the server — reading it in the component body would break the
+ * prerender.
+ */
+function useIsSmallScreen(): boolean {
+  const [small, setSmall] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 820px), (pointer: coarse)");
+    const update = () => setSmall(query.matches && window.innerWidth <= 1024);
+    update();
+    query.addEventListener("change", update);
+    window.addEventListener("resize", update);
+    return () => {
+      query.removeEventListener("change", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  return small;
+}
 
 export default function Loader() {
   const loading = useScrollStore((s) => s.loading);
   const loadProgress = useScrollStore((s) => s.loadProgress);
+  const isSmallScreen = useIsSmallScreen();
 
   return (
     <AnimatePresence>
@@ -74,6 +108,59 @@ export default function Loader() {
           >
             {Math.round(loadProgress * 100)}
           </p>
+
+          {/* Desktop recommendation. Late delay so it arrives after the title and
+              progress bar have settled — it's a footnote, not the headline, and
+              appearing simultaneously would compete with them. */}
+          <AnimatePresence>
+            {isSmallScreen && (
+              <motion.div
+                className="desktop-hint"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.7, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {/* Monitor glyph. Drawn rather than an emoji so it inherits the
+                    accent colour and stays crisp at this size. */}
+                <motion.svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  aria-hidden
+                  // A slow breathing pulse draws the eye without the urgency of
+                  // a flash — this is advice, not an error.
+                  animate={{ opacity: [0.55, 1, 0.55] }}
+                  transition={{ repeat: Infinity, duration: 2.6, ease: "easeInOut" }}
+                  style={{ flex: "none" }}
+                >
+                  <rect
+                    x="2.5"
+                    y="3.5"
+                    width="15"
+                    height="10"
+                    rx="1.5"
+                    stroke="var(--accent-cyan)"
+                    strokeWidth="1.1"
+                  />
+                  <path
+                    d="M7.5 16.5h5M10 13.5v3"
+                    stroke="var(--accent-cyan)"
+                    strokeWidth="1.1"
+                    strokeLinecap="round"
+                  />
+                </motion.svg>
+
+                <span className="desktop-hint-text">
+                  BEST EXPERIENCED ON DESKTOP
+                  <span className="desktop-hint-sub">
+                    Full 3D choreography · larger canvas
+                  </span>
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>

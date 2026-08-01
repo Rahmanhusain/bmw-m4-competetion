@@ -671,6 +671,181 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateX(4px);
 }
 
+/* ---- Section rail ----------------------------------------------------
+   The right-edge navigation. Was a column of decorative dots; now a real list
+   of jump buttons.
+
+   The hit target is deliberately much larger than the visible dot — a 4px dot
+   is far below any sane minimum touch target, so each button carries 10px of
+   vertical padding and the label's width, giving a comfortable strip to aim at
+   while the dot itself stays visually small. */
+.rail {
+  position: fixed;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+}
+
+.rail-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rail-item {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.rail-dot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  /* The padding *is* the hit area. */
+  padding: 0.32rem 0.15rem 0.32rem 0.75rem;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+/* The visible dot. Separate element from the button so the button can be big
+   while this stays 4px. */
+.rail-tick {
+  flex: none;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #2A2C31;
+  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.3s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.rail-dot:hover .rail-tick,
+.rail-dot:focus-visible .rail-tick {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(79, 216, 232, 0.6);
+}
+
+.rail-dot-active .rail-tick {
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  box-shadow: 0 0 10px rgba(58, 111, 245, 0.55);
+}
+
+/* Labels are always in the DOM and revealed with opacity/transform. Mounting
+   them on hover would force a layout pass mid-interaction, over a canvas that
+   is already compositing every frame. */
+.rail-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.25s ease, transform 0.25s ease, color 0.25s ease;
+  pointer-events: none;
+}
+
+.rail-dot:hover .rail-label,
+.rail-dot:focus-visible .rail-label {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--text-primary);
+}
+
+.rail-dot-active .rail-label {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--accent-cyan);
+}
+
+/* Focus ring goes on the dot, not the whole padded strip — the global
+   :focus-visible outline on a mostly-transparent button reads as a stray box. */
+.rail-dot:focus-visible {
+  outline: none;
+}
+
+.rail-dot:focus-visible .rail-tick {
+  outline: 1px solid var(--accent-from);
+  outline-offset: 3px;
+}
+
+/* ---- Desktop recommendation (loading screen) --------------------------
+   Shown on small/touch devices while the loader is up. Deliberately quiet: a
+   recommendation, not a blocker — the site still works at this size. */
+.desktop-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: min(300px, calc(100vw - 3rem));
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(79, 216, 232, 0.2);
+  text-align: left;
+}
+
+.desktop-hint-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.desktop-hint-sub {
+  font-weight: 400;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+/* ---- Mobile -----------------------------------------------------------
+   The layout is built around a fixed canvas with text floating over it, so the
+   phone work is mostly about giving that text room: the side-anchored panels
+   become full-width blocks pinned low, clear of the car in the middle of the
+   frame. */
+@media (max-width: 640px) {
+  /* The rail's labels would overlap the section copy. The dots stay as
+     position indicators and remain tappable. */
+  .rail-label {
+    display: none;
+  }
+
+  /* Pull the rail in tight to the edge and shrink its hit strip, so it stops
+     stealing horizontal space from the copy. */
+  .rail {
+    right: 0.5rem;
+    gap: 0.55rem;
+  }
+
+  .rail-dot {
+    padding: 0.4rem 0.3rem;
+  }
+
+  /* Bottom-anchored CTA needs to clear the home indicator / URL bar. */
+  .cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
 @media (prefers-reduced-motion: reduce) {
   .gradient-text,
   .radial-env::before,
