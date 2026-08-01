@@ -12,6 +12,7 @@ import { sections } from "@/lib/sections";
 import SectionPanel from "@/components/ui/SectionPanel";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import ExploreHint from "@/components/ui/ExploreHint";
+import DesktopTipBanner from "@/components/ui/DesktopTipBanner";
 import Loader from "@/components/ui/Loader";
 import SocialLinks from "@/components/ui/SocialLinks";
 import AudioCues from "@/components/ui/AudioCues";
@@ -267,6 +268,9 @@ export default function HomePage() {
 
       {/* Header: logo + audio toggle */}
       {!loading && <Header />}
+
+      {/* One-time reminder that the full experience is built for desktop */}
+      {!loading && <DesktopTipBanner />}
 
       {/* Scroll/camera sound cues. Renders nothing. */}
       {!loading && <AudioCues />}
